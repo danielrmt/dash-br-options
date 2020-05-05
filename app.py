@@ -11,11 +11,12 @@ import dash_table
 from dash_table.Format import Format, Scheme, Sign
 
 from layout_helpers import *
+from data_helpers import *
 
 
 #
-empresas = pd.read_csv('ativos.csv')
-opcoes = pd.read_csv('opcoes.csv')
+empresas = cache_data('ativos.csv', download_ativos)
+opcoes = cache_data('opcoes.csv', download_opcoes)
 empresas['base_ticker'] = empresas['ticker_acao'].str[:4]
 empresas = empresas[empresas['base_ticker'].isin(opcoes['base_ticker'])]
 empresas = empresas.sort_values('part', ascending=False).drop_duplicates('base_ticker')

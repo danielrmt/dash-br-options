@@ -1,0 +1,87 @@
+
+
+import os
+import requests
+import urllib.request as ur
+from zipfile import ZipFile
+import datetime
+import json
+
+import numpy as np
+import pandas as pd
+from bs4 import BeautifulSoup
+
+
+def download_ativos(indice='IBRA'):
+    url = 'http://bvmf.bmfbovespa.com.br/indices/ResumoCarteiraTeorica.aspx?' + \
+        f'Indice={indice}'
+    acoes = pd.read_html(url)[0]
+    acoes.columns = ['ticker_acao', 'empresa', 'tipo', 'qtde', 'part']
+    acoes['part'] = acoes['part'] / 1000
+    acoes = acoes[acoes['part'] != 100]
+
+
+    url = 'http://bvmf.bmfbovespa.com.br/etf/fundo-de-indice.aspx?idioma=pt-br' + \
+        '&aba=tabETFsRendaVariavel'
+    etfs = pd.read_html(url)[0]
+    etfs.columns = ['a', 'empresa', 'b', 'ticker_acao']
+    etfs = etfs[['empresa', 'ticker_acao']]
+    etfs['ticker_acao'] = etfs['ticker_acao'] + '11'
+    etfs['part'] = 0
+    etfs['tipo'] = 'ETF'
+
+    return pd.concat([acoes, etfs])
+
+
+def download_opcoes():
+    # Extract file url from B3 website
+    # url = 'http://www.b3.com.br/pt_br/market-data-e-indices/servicos-de-dados/' + \
+    #     'market-data/consultas/mercado-a-vista/opcoes/series-autorizadas/'
+    url = 'http://www.bmfbovespa.com.br/pt_br/servicos/market-data/' + \
+        'consultas/mercado-a-vista/opcoes/series-autorizadas/'
+    page = requests.get(url)
+    soup = BeautifulSoup(page.text, 'html.parser')
+    url = soup.find("a", string="Lista Completa de Séries Autorizadas").get('href')
+    # url = 'http://www.b3.com.br' + url
+    url = 'http://www.bmfbovespa.com.br/' + url
+    print(url)
+
+    # Unzip
+    filehandle, _ = ur.urlretrieve(url)
+    with ZipFile(filehandle, 'r') as zip_ref:
+        zip_ref.extractall()
+
+    if not os.path.exists('SI_D_SEDE.txt'):
+        raise Exception('SI_D_SEDE.txt not found')
+    else:
+        # Wrangle data
+        df = pd.read_csv('SI_D_SEDE.txt', '|', skiprows=1, header=None,
+                        names=['x1', 'empresa', 'x2', 'tipo_opcao', 'x3', 'x4',
+                                'ticker_empresa', 'tipo_acao', 'x5', 'x6', 'x7',
+                                'x8', 'x9', 'ticker_opcao', 'x10',
+                                'tipo_exercicio', 'strike', 'vencimento', 'x11'],
+                        usecols=[3, 13, 15, 16, 17],
+                        parse_dates=['vencimento'], infer_datetime_format=True)
+        df['base_ticker'] = df['ticker_opcao'].str[:4]
+        df['tipo_opcao'] = df['tipo_opcao'].replace({'OPCOES VENDA': 'put',
+                                                    'OPCOES COMPRA': 'call'})
+        df = df[df['tipo_opcao'].isin(['call', 'put'])]
+        df['ticker_opcao'] = df['ticker_opcao'].str.strip()
+        return df
+
+
+def last_selic():    
+    data = datetime.datetime.now().strftime("%d/%m/%Y")
+    url = f'https://www.bcb.gov.br/api/servico/sitebcb/bcdatasgs?serie=432&dataInicial={data}&dataFinal={data}'
+    return json.loads(requests.get(url).text)['conteudo'][0]['valor']
+
+
+def cache_data(fn, fun):
+    if os.path.exists(fn):
+        print(f'{fn} exists, using cached version')
+        return pd.read_csv(fn)
+    else:
+        print(f'{fn} does not exist, creating file')
+        df = fun()
+        df.to_csv(fn, index=False)
+        return df
