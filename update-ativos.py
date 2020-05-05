@@ -22,6 +22,5 @@ etfs['part'] = 0
 etfs['tipo'] = 'ETF'
 
 data = pd.concat([acoes, etfs])
-print(data)
 
 data.to_csv('ativos.csv', index=False)
