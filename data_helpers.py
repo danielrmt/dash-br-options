@@ -10,6 +10,7 @@ import json
 import numpy as np
 import pandas as pd
 from bs4 import BeautifulSoup
+import xml.etree.ElementTree as ET
 
 
 def download_ativos(indice='IBRA'):
@@ -27,7 +28,7 @@ def download_ativos(indice='IBRA'):
     etfs.columns = ['a', 'empresa', 'b', 'ticker_acao']
     etfs = etfs[['empresa', 'ticker_acao']]
     etfs['ticker_acao'] = etfs['ticker_acao'] + '11'
-    etfs['part'] = 0
+    etfs['part'] = np.where(etfs['ticker_acao'] == 'BOVA11', 100, 0)
     etfs['tipo'] = 'ETF'
 
     return pd.concat([acoes, etfs])
@@ -74,6 +75,18 @@ def last_selic():
     data = datetime.datetime.now().strftime("%d/%m/%Y")
     url = f'https://www.bcb.gov.br/api/servico/sitebcb/bcdatasgs?serie=432&dataInicial={data}&dataFinal={data}'
     return json.loads(requests.get(url).text)['conteudo'][0]['valor']
+
+
+def get_quotes(tickers):
+    url = 'http://bvmf.bmfbovespa.com.br/cotacoes2000/' + \
+        'FormConsultaCotacoes.asp?strListaCodigos=' + '|'.join(tickers)
+    page = requests.get(url)
+    xml = ET.fromstring(page.text)
+    df = pd.DataFrame([p.attrib for p in xml.findall('Papel')])
+    df = df[['Codigo', 'Data', 'Ultimo']]
+    df.columns = ['ticker', 'data', 'cotacao']
+    df['cotacao'] = pd.to_numeric(df['cotacao'].str.replace(',','.'))
+    return df
 
 
 def cache_data(fn, fun):

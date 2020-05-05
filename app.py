@@ -39,6 +39,7 @@ server = app.server
 table = dash_table.DataTable(id='options_table', data=[], columns=[],
     style_as_list_view=True, style_header={'fontWeight': 'bold'})
 
+
 # SIDEBAR
 empresas_opt = [{'label': s, 'value': s} for s in empresas['ticker_acao']]
 vencims_opt = [{'label': s, 'value': s} for s in vencims]
@@ -56,6 +57,7 @@ sidebar = html.Div([
 
 # MAIN GRID
 grid = gen_grid([
+    [gen_card('', id='quote_card', title='Cotação do ativo')],
     ['']
 ])
 
@@ -69,28 +71,49 @@ hidden = html.Div(
     style={'display': 'none'})
 app.layout = html.Div([
     navbar,
-    gen_sidebar_layout(sidebar, grid, 4, mainClass='container-fluid'),
+    gen_sidebar_layout(sidebar, grid, 6, mainClass='container-fluid'),
     hidden])
 
 
 # CALLBACKS
 @app.callback(
+    Output('quote_card', 'children'),
+    [Input('empresa', 'value')])
+def update_quote(empresa):
+    return get_quotes([empresa]).tail(1)['cotacao'].values
+
+
+@app.callback(
     Output('options_data', 'children'),
     [Input('empresa', 'value'),
      Input('vencim', 'value'),
-     Input('tipos','value')])
-def update_data(empresa, vencim, tipos):
+     Input('tipos', 'value'),
+     Input('quote_card', 'children')])
+def update_data(empresa, vencim, tipos, cotacao_ativo):
     df = opcoes[(opcoes['base_ticker'] == empresa[:4]) &
                 (opcoes['tipo_opcao'].isin(tipos)) &
                 (opcoes['tipo_exercicio'].str.lower().isin(tipos)) &
-                (opcoes['vencimento'] == vencim)][['ticker_opcao', 'strike',
-                                                   'tipo_opcao',
-                                                   'tipo_exercicio']]
+                (opcoes['vencimento'] == vencim)]
+    cotacao_ativo = cotacao_ativo[0]
+    df['diffstrike'] = np.abs(cotacao_ativo - df['strike'])
+    df.sort_values('diffstrike', inplace=True)
+    df['VI'] = np.where(df['tipo_opcao'] == 'call',
+                        cotacao_ativo - df['strike'],
+                        df['strike'] - cotacao_ativo)
+    df['VI'] = np.where(df['VI'] < 0, 0, df['VI'])
+    df = df.head(20).rename(columns={'ticker_opcao':'ticker'})
+
+    quotes = get_quotes(df['ticker'].values)
+    df = pd.merge(df, quotes, on='ticker')
+    df['VE'] = df['cotacao'] - df['VI']
+
+    df = df[['ticker', 'strike', 'tipo_opcao', 'tipo_exercicio', 'cotacao',
+             'VI', 'VE']]
     return [df.to_json(date_format='iso', orient='split')]
 
 #
 
-numeric_fmt = Format(precision=1, scheme=Scheme.fixed, sign=Sign.parantheses)
+numeric_fmt = Format(precision=2, scheme=Scheme.fixed, sign=Sign.parantheses)
 @app.callback(
     [Output('options_table', 'data'),
      Output('options_table', 'columns')],
