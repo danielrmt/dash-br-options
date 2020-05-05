@@ -43,4 +43,4 @@ else:
     df['ticker_opcao'] = df['ticker_opcao'].str.strip()
 
     # Save
-    df.to_csv('lista_opcoes.csv', index=False)
+    df.to_csv('opcoes.csv', index=False)
