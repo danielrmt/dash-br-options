@@ -2,3 +2,4 @@
 *.csv
 .vscode
 venv
+selic.txt
