@@ -45,21 +45,20 @@ table = dash_table.DataTable(id='options_table', data=[], columns=[],
 empresas_opt = [{'label': s, 'value': s} for s in empresas['ticker_acao']]
 vencims_opt = [{'label': s, 'value': s} for s in vencims]
 tipos = ['call', 'put', 'americano', 'europeu']
-sidebar = html.Div([
-    dcc.Dropdown(id='empresa', value='BOVA11', options=empresas_opt),
-    dcc.Dropdown(id='vencim', value=vencims.min(), options=vencims_opt),
-    dcc.Checklist(id='tipos', value=tipos,
-        options=[{'label':s,'value':s} for s in tipos]),
-    table
+sidebar = gen_grid([
+    [['Ativo',dcc.Dropdown(id='empresa', value='BOVA11', options=empresas_opt)],
+     ['Vencimento', dcc.Dropdown(id='vencim', value=vencims.min(), options=vencims_opt)]],
+    [dcc.Checklist(id='tipos', value=tipos,
+        options=[{'label':s,'value':s} for s in tipos])],
+    [table]
 ])
-
-
 
 
 # MAIN GRID
 grid = gen_grid([
     [gen_card('', id='quote_card', title='Cotação do ativo'),
-     gen_card(selic, id='selic_card', title='SELIC')],
+     gen_card(selic, id='selic_card', title='SELIC'),
+     gen_card('', id='dias_vencim', title='Dias para vencimento')],
     ['']
 ])
 
@@ -67,7 +66,7 @@ grid = gen_grid([
 # LAYOUT
 app.title = "Brazilian Options"
 navbar = gen_navbar(app.title,
-    {'Github': 'https://github.com/danielrmt/dash-br-options'})
+    {})
 hidden = html.Div(
     [html.Div([], id=s) for s in ['options_data']],
     style={'display': 'none'})
@@ -78,6 +77,13 @@ app.layout = html.Div([
 
 
 # CALLBACKS
+@app.callback(
+    Output('dias_vencim', 'children'),
+    [Input('vencim', 'value')])
+def update_wdays(vencim):
+    return np.busday_count(np.datetime64('today', 'D'), vencim)
+
+
 @app.callback(
     Output('quote_card', 'children'),
     [Input('empresa', 'value')])
