@@ -15,6 +15,7 @@ from data_helpers import *
 
 
 #
+selic = last_selic()
 empresas = cache_data('ativos.csv', download_ativos)
 opcoes = cache_data('opcoes.csv', download_opcoes)
 empresas['base_ticker'] = empresas['ticker_acao'].str[:4]
@@ -57,7 +58,8 @@ sidebar = html.Div([
 
 # MAIN GRID
 grid = gen_grid([
-    [gen_card('', id='quote_card', title='Cotação do ativo')],
+    [gen_card('', id='quote_card', title='Cotação do ativo'),
+     gen_card(selic, id='selic_card', title='SELIC')],
     ['']
 ])
 
