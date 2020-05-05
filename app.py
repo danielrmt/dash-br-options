@@ -59,7 +59,7 @@ grid = gen_grid([
     [gen_card('', id='quote_card', title='Cotação do ativo'),
      gen_card(selic, id='selic_card', title='SELIC'),
      gen_card('', id='dias_vencim', title='Dias para vencimento')],
-    ['']
+    [dcc.Graph(id='payoff_plot')]
 ])
 
 
@@ -120,7 +120,7 @@ def update_data(empresa, vencim, tipos, cotacao_ativo):
     return [df.to_json(date_format='iso', orient='split')]
 
 #
-
+int_fmt = Format(precision=0, scheme=Scheme.fixed, sign=Sign.parantheses)
 numeric_fmt = Format(precision=2, scheme=Scheme.fixed, sign=Sign.parantheses)
 @app.callback(
     [Output('options_table', 'data'),
@@ -128,10 +128,40 @@ numeric_fmt = Format(precision=2, scheme=Scheme.fixed, sign=Sign.parantheses)
     [Input('options_data', 'children')])
 def update_table(data):
     df = pd.read_json(data[0], orient='split')
-
+    df['posicao'] = 0
     return df.to_dict('records'), \
-        [{'name':str(s),'id':str(s),'type':'numeric',
-         'format':numeric_fmt} for s in df.columns]
+        [{'name': str(s), 'id': str(s), 'type': 'numeric',
+         'format': numeric_fmt if s != 'posicao' else int_fmt,
+         'editable': s == 'posicao'} for s in df.columns]
+
+
+@app.callback(
+    Output('payoff_plot', 'figure'),
+    [Input('options_table', 'data')]
+)
+def update_payoff(data):
+    df = pd.DataFrame(data)
+    strikes = np.arange(df['strike'].min()-1, df['strike'].max()+1, 0.01)
+    df = df[df['posicao'] != 0]
+    custo = np.sum(df['posicao'] * df['cotacao'])
+    if df.shape[0] == 0:
+        return {}
+    
+    payoff = pd.DataFrame(index=strikes, columns=df['ticker']).reset_index()
+    payoff = payoff.melt('index')
+    payoff = pd.merge(payoff, df)
+    payoff['payoff'] = 0
+    payoff['payoff'] = np.where(payoff['tipo_opcao'] == 'call', 
+                                payoff['index'] - payoff['strike'],
+                                payoff['payoff'])
+    payoff['payoff'] = np.where(payoff['tipo_opcao'] == 'put', 
+                                payoff['strike'] - payoff['index'],
+                                payoff['payoff'])
+    payoff['payoff'] = np.where(payoff['payoff'] < 0, 0, payoff['payoff'])
+    payoff['payoff'] = payoff['payoff'] * payoff['posicao'].fillna(0)
+    payoff = payoff.groupby('index')['payoff'].sum() - custo
+
+    return {'data':[{'x':payoff.index, 'y':payoff.values}]}
 
 # ----
 if __name__ == '__main__':
