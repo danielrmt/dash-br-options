@@ -68,7 +68,7 @@ def download_opcoes():
                                                     'OPCOES COMPRA': 'call'})
         df = df[df['tipo_opcao'].isin(['call', 'put'])]
         df['ticker_opcao'] = df['ticker_opcao'].str.strip()
-        df['vencimento'] = pd.to_datetime(df['vencimento'])
+        df['vencimento'] = pd.to_datetime(df['vencimento']).dt.strftime('%Y-%m-%d')
         return df
 
 
