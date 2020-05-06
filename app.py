@@ -46,8 +46,11 @@ empresas_opt = [{'label': s, 'value': s} for s in empresas['ticker_acao']]
 vencims_opt = [{'label': s, 'value': s} for s in vencims]
 tipos = ['call', 'put', 'americano', 'europeu']
 sidebar = gen_grid([
-    [['Ativo',dcc.Dropdown(id='empresa', value='BOVA11', options=empresas_opt)],
-     ['Vencimento', dcc.Dropdown(id='vencim', value=vencims.min(), options=vencims_opt)]],
+    [['Ativo',
+      dcc.Dropdown(id='empresa', value='BOVA11', clearable=False,
+                   options=empresas_opt)],
+     ['Vencimento', dcc.Dropdown(id='vencim', clearable=False,
+                                 value=vencims.min(), options=vencims_opt)]],
     [dcc.Checklist(id='tipos', value=tipos,
         options=[{'label':s,'value':s} for s in tipos])],
     [table]
