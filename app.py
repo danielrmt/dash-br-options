@@ -15,6 +15,10 @@ from data_helpers import *
 
 
 #
+plotly_margin = dict(l=30, r=20, t=40, b=20)
+
+
+#
 selic = last_selic()
 empresas = cache_data('ativos.csv', download_ativos)
 opcoes = cache_data('opcoes.csv', download_opcoes)
@@ -164,7 +168,9 @@ def update_payoff(data):
     payoff['payoff'] = payoff['payoff'] * payoff['posicao'].fillna(0)
     payoff = payoff.groupby('index')['payoff'].sum() - custo
 
-    return {'data':[{'x':payoff.index, 'y':payoff.values}]}
+    return {'data':[{'x': payoff.index, 'y': payoff.values}],
+            'layout':{'margin': plotly_margin,
+                      'title': 'Payoff no vencimento'}}
 
 # ----
 if __name__ == '__main__':
