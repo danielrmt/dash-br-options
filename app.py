@@ -142,9 +142,9 @@ def update_table(data):
     df = pd.read_json(data[0], orient='split')
     df['posicao'] = 0
     return df.to_dict('records'), \
-        [{'name': str(s), 'id': str(s), 'type': 'numeric',
-         'format': numeric_fmt if s != 'posicao' else int_fmt,
-         'editable': s == 'posicao'} for s in df.columns]
+        [{'name': str(s).replace('_', ' '), 'id': str(s), 'type': 'numeric',
+          'format': numeric_fmt if s != 'posicao' else int_fmt,
+          'editable': s == 'posicao'} for s in df.columns]
 
 
 @app.callback(
