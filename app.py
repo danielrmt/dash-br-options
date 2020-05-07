@@ -48,7 +48,7 @@ table = dash_table.DataTable(id='options_table', data=[], columns=[],
 # SIDEBAR
 empresas_opt = [{'label': s, 'value': s} for s in empresas['ticker_acao']]
 vencims_opt = [{'label': s, 'value': s} for s in vencims]
-tipos = ['call', 'put', 'americano', 'europeu']
+tipos = ['call', 'put', 'americano', 'europeu', 'ITM', 'OTM', 'ATM']
 sidebar = gen_grid([
     [['Ativo',
       dcc.Dropdown(id='empresa', value='BOVA11', clearable=False,
@@ -116,14 +116,19 @@ def update_data(empresa, vencim, tipos, cotacao_ativo):
                         cotacao_ativo - df['strike'],
                         df['strike'] - cotacao_ativo)
     df['VI'] = np.where(df['VI'] < 0, 0, df['VI'])
+
+    df['money'] = np.where(df['VI'] > 0, 'ITM', 'OTM')
+    df['money'] = np.where(df['diffstrike'] <= 0.5, 'ATM', df['money'])
+    df = df[df['money'].isin(tipos)]
+
     df = df.head(20).rename(columns={'ticker_opcao':'ticker'})
 
     quotes = get_quotes(df['ticker'].values)
     df = pd.merge(df, quotes, on='ticker')
     df['VE'] = df['cotacao'] - df['VI']
 
-    df = df[['ticker', 'strike', 'tipo_opcao', 'tipo_exercicio', 'cotacao',
-             'VI', 'VE']]
+    df = df[['ticker', 'strike', 'tipo_opcao', 'tipo_exercicio', 'money',
+             'cotacao', 'VI', 'VE']]
     return [df.to_json(date_format='iso', orient='split')]
 
 #
