@@ -56,6 +56,9 @@ sidebar = gen_grid([
      ['Vencimento', dcc.Dropdown(id='vencim', clearable=False,
                                  value=vencims.min(), options=vencims_opt)]],
     [dcc.Checklist(id='tipos', value=tipos,
+        className='form-group', 
+        labelClassName='form-check-label form-check form-check-inline',
+        inputClassName='form-check-input',
         options=[{'label':s,'value':s} for s in tipos])],
     [table]
 ])
