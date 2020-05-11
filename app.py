@@ -22,8 +22,10 @@ plotly_margin = dict(l=30, r=20, t=40, b=20)
 selic = last_selic()
 empresas = cache_data('ativos.csv', download_ativos)
 opcoes = cache_data('opcoes.csv', download_opcoes)
+tickers_proxvenc = opcoes['base_ticker'][opcoes['vencimento'] ==
+                                         opcoes['vencimento'].min()].unique()
 empresas['base_ticker'] = empresas['ticker_acao'].str[:4]
-empresas = empresas[empresas['base_ticker'].isin(opcoes['base_ticker'])]
+empresas = empresas[empresas['base_ticker'].isin(tickers_proxvenc)]
 empresas = empresas.sort_values('part', ascending=False).drop_duplicates('base_ticker')
 vencims = opcoes['vencimento'].sort_values().unique()
 
