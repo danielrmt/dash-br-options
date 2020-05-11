@@ -54,7 +54,7 @@ tipos = ['call', 'put', 'americano', 'europeu', 'ITM', 'OTM', 'ATM']
 sidebar = gen_grid([
     [['Ativo',
       dcc.Dropdown(id='empresa', value='BOVA11', clearable=False,
-                   options=empresas_opt)],
+                   options=empresas_opt, persistence=True)],
      ['Vencimento', dcc.Dropdown(id='vencim', clearable=False,
                                  value=vencims.min(), options=vencims_opt)]],
     [dcc.Checklist(id='tipos', value=tipos,
