@@ -95,7 +95,7 @@ app.layout = html.Div([
     Output('dias_vencim', 'children'),
     [Input('vencim', 'value')])
 def update_wdays(vencim):
-    return np.busday_count(np.datetime64('today', 'D'), vencim)
+    return np.busday_count(np.datetime64('today', 'D'), vencim) - 1
 
 
 @app.callback(
