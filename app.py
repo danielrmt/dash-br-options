@@ -160,7 +160,9 @@ def update_table(data):
 )
 def update_payoff(data):
     df = pd.DataFrame(data)
-    strikes = np.arange(df['strike'].min()-1, df['strike'].max()+1, 0.01)
+    cot_range = df['cotacao'].max()*2 + 1
+    strikes = np.arange(df['strike'].min()-cot_range, 
+                        df['strike'].max()+cot_range, 0.01)
     df = df[df['posicao'] != 0]
     custo = np.sum(df['posicao'] * df['cotacao'])
     if df.shape[0] == 0:
