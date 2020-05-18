@@ -2,6 +2,7 @@
 
 import numpy as np
 import pandas as pd
+from datetime import date
 
 import dash
 import dash_core_components as dcc
@@ -22,6 +23,7 @@ plotly_margin = dict(l=30, r=20, t=40, b=20)
 selic = last_selic()
 empresas = cache_data('ativos.csv', download_ativos)
 opcoes = cache_data('opcoes.csv', download_opcoes)
+opcoes = opcoes[pd.to_datetime(opcoes['vencimento']) > pd.to_datetime(date.today())]
 tickers_proxvenc = opcoes['base_ticker'][opcoes['vencimento'] ==
                                          opcoes['vencimento'].min()].unique()
 empresas['base_ticker'] = empresas['ticker_acao'].str[:4]
