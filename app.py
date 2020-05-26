@@ -11,12 +11,26 @@ from dash.dependencies import Input, Output, ALL
 import dash_table
 from dash_table.Format import Format, Scheme, Sign
 
+import plotly.graph_objects as go
+import plotly.express as px
+import plotly.io as pio
+
 from layout_helpers import *
 from data_helpers import *
 
 
 #
 plotly_margin = dict(l=30, r=20, t=40, b=20)
+
+pio.templates["custom"] = go.layout.Template(
+    layout=go.Layout(
+        margin=dict(l=50, r=20, t=40, b=20),
+        legend=dict(orientation='h'),
+        colorway=["#E69F00", "#56B4E9", "#009E73", "#F0E442", 
+                  "#0072B2", "#D55E00", "#CC79A7", "#999999"]
+    )
+)
+pio.templates.default = 'custom'
 
 
 #
@@ -181,7 +195,8 @@ def update_payoff(data):
     payoff['payoff'] = np.where(payoff['payoff'] < 0, 0, payoff['payoff'])
     payoff['payoff'] = payoff['payoff'] * payoff['posicao'].fillna(0)
     payoff = payoff.groupby('index')['payoff'].sum() - custo
-
+    return px.line(x=payoff.index, y=payoff.values,
+        title='Payoff no vencimento')
     return {'data':[{'x': payoff.index, 'y': payoff.values}],
             'layout':{'margin': plotly_margin,
                       'title': 'Payoff no vencimento'}}
