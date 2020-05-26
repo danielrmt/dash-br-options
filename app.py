@@ -196,22 +196,22 @@ def update_payoff(data, payoff_unit, cotacao_ativo, posicao_ativo):
     df = df[df['posicao'] != 0]
     custo = np.sum(df['posicao'] * df['cotacao']) + posicao_ativo*cotacao_ativo
     if df.shape[0] == 0:
-        return {}
-    
-    payoff = pd.DataFrame(index=strikes, columns=df['ticker']).reset_index()
-    payoff = payoff.melt('index')
-    payoff = pd.merge(payoff, df)
-    payoff['payoff'] = 0
-    payoff['payoff'] = np.where(payoff['tipo_opcao'] == 'call', 
-                                payoff['index'] - payoff['strike'],
-                                payoff['payoff'])
-    payoff['payoff'] = np.where(payoff['tipo_opcao'] == 'put', 
-                                payoff['strike'] - payoff['index'],
-                                payoff['payoff'])
-    payoff['payoff'] = np.where(payoff['payoff'] < 0, 0, payoff['payoff'])
-    payoff['payoff'] = payoff['payoff'] * payoff['posicao'].fillna(0)
-    payoff = payoff.groupby('index')['payoff'].sum()
-    payoff = payoff + posicao_ativo * payoff.index - custo
+        payoff = pd.Series(strikes * posicao_ativo - custo, index=strikes)
+    else:
+        payoff = pd.DataFrame(index=strikes, columns=df['ticker']).reset_index()
+        payoff = payoff.melt('index')
+        payoff = pd.merge(payoff, df)
+        payoff['payoff'] = 0
+        payoff['payoff'] = np.where(payoff['tipo_opcao'] == 'call',
+                                    payoff['index'] - payoff['strike'],
+                                    payoff['payoff'])
+        payoff['payoff'] = np.where(payoff['tipo_opcao'] == 'put',
+                                    payoff['strike'] - payoff['index'],
+                                    payoff['payoff'])
+        payoff['payoff'] = np.where(payoff['payoff'] < 0, 0, payoff['payoff'])
+        payoff['payoff'] = payoff['payoff'] * payoff['posicao'].fillna(0)
+        payoff = payoff.groupby('index')['payoff'].sum()
+        payoff = payoff + posicao_ativo * payoff.index - custo
 
     if payoff_unit == '%':
         payoff = 100 * (payoff / custo)
