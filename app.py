@@ -17,6 +17,7 @@ import plotly.io as pio
 
 from layout_helpers import *
 from data_helpers import *
+from finance_helpers import *
 
 
 #
@@ -112,7 +113,7 @@ hidden = html.Div(
     style={'display': 'none'})
 app.layout = html.Div([
     navbar,
-    gen_sidebar_layout(sidebar, grid, 6, mainClass='container-fluid'),
+    gen_sidebar_layout(sidebar, grid, 8, mainClass='container-fluid'),
     hidden])
 
 
@@ -136,13 +137,15 @@ def update_quote(empresa):
     [Input('empresa', 'value'),
      Input('vencim', 'value'),
      Input('tipos', 'value'),
-     Input('quote_card', 'children')])
-def update_data(empresa, vencim, tipos, cotacao_ativo):
+     Input('quote_card', 'children'),
+     Input('dias_vencim', 'children')])
+def update_data(empresa, vencim, tipos, cotacao_ativo, dias_vencim):
     df = opcoes[(opcoes['base_ticker'] == empresa[:4]) &
                 (opcoes['tipo_opcao'].isin(tipos)) &
                 (opcoes['tipo_exercicio'].str.lower().isin(tipos)) &
                 (opcoes['vencimento'] == vencim)]
     cotacao_ativo = cotacao_ativo[0]
+    dias_vencim = int(dias_vencim)
     df['diffstrike'] = np.abs(cotacao_ativo - df['strike'])
     df.sort_values('diffstrike', inplace=True)
     df['VI'] = np.where(df['tipo_opcao'] == 'call',
@@ -160,8 +163,18 @@ def update_data(empresa, vencim, tipos, cotacao_ativo):
     df = pd.merge(df, quotes, on='ticker')
     df['VE'] = df['cotacao'] - df['VI']
 
+    # Calculate implied volatility
+    df['Vol'] = df.apply(
+        lambda x: implied_vol(x['cotacao'], cotacao_ativo,
+        x['strike'], float(selic), dias_vencim, x['tipo_opcao']),
+        axis=1)
+    # Calculate greeks
+    gregas = df_black_scholes(cotacao_ativo, df['strike'], float(selic),
+            df['Vol'], dias_vencim, df['tipo_opcao'])
+    df = pd.concat([df, gregas], axis=1)
+
     df = df[['ticker', 'strike', 'tipo_opcao', 'tipo_exercicio', 'money',
-             'cotacao', 'VI', 'VE']]
+             'cotacao', 'VI', 'VE', 'Vol', 'delta', 'gamma', 'vega', 'theta', 'rho']]
     return [df.to_json(date_format='iso', orient='split')]
 
 #
