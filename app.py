@@ -20,11 +20,9 @@ from data_helpers import *
 
 
 #
-plotly_margin = dict(l=30, r=20, t=40, b=20)
-
 pio.templates["custom"] = go.layout.Template(
     layout=go.Layout(
-        margin=dict(l=50, r=20, t=40, b=20),
+        margin=dict(l=50, r=20, t=40, b=40),
         legend=dict(orientation='h'),
         colorway=["#E69F00", "#56B4E9", "#009E73", "#F0E442", 
                   "#0072B2", "#D55E00", "#CC79A7", "#999999"]
@@ -87,6 +85,13 @@ grid = gen_grid([
     [gen_card('', id='quote_card', title='Cotação do ativo'),
      gen_card(selic, id='selic_card', title='SELIC'),
      gen_card('', id='dias_vencim', title='Dias para vencimento')],
+    [dcc.RadioItems(
+        options=[{'label': x,'value': x} for x in ['R$', '%']],
+        id='payoff_unit', value='R$', persistence=True,
+        className='form-check form-check-inline',
+        inputClassName='form-check-input form-check-inline',
+        labelClassName='form-check-label form-check-inline'
+    )],
     [dcc.Graph(id='payoff_plot')]
 ])
 
@@ -170,9 +175,12 @@ def update_table(data):
 
 @app.callback(
     Output('payoff_plot', 'figure'),
-    [Input('options_table', 'data')]
+    [Input('options_table', 'data'),
+     Input('payoff_unit', 'value'),
+     Input('quote_card', 'children')]
 )
-def update_payoff(data):
+def update_payoff(data, payoff_unit, cotacao_ativo):
+    cotacao_ativo = cotacao_ativo[0]
     df = pd.DataFrame(data)
     cot_range = df['cotacao'].max()*2 + 1
     strikes = np.arange(df['strike'].min()-cot_range, 
@@ -195,11 +203,22 @@ def update_payoff(data):
     payoff['payoff'] = np.where(payoff['payoff'] < 0, 0, payoff['payoff'])
     payoff['payoff'] = payoff['payoff'] * payoff['posicao'].fillna(0)
     payoff = payoff.groupby('index')['payoff'].sum() - custo
-    return px.line(x=payoff.index, y=payoff.values,
-        title='Payoff no vencimento')
-    return {'data':[{'x': payoff.index, 'y': payoff.values}],
-            'layout':{'margin': plotly_margin,
-                      'title': 'Payoff no vencimento'}}
+
+    if payoff_unit == '%':
+        payoff = 100 * (payoff / custo)
+        payoff.index = 100 * (payoff.index / cotacao_ativo - 1)
+        labs = {'x':'Variação do ativo (%)',
+                'y': 'Payoff (%)'}
+    else:
+        labs = {'x':'Cotação do ativo (R$)',
+                'y': 'Payoff (R$)'}
+    fig = px.line(x=payoff.index, y=payoff.values,
+        title='Payoff no vencimento', labels=labs)
+    if payoff_unit == 'R$':
+        fig.add_shape(type='line', line=dict(color='#999999', dash='dot'),
+            x0=cotacao_ativo, y0=payoff.min()-1,
+            x1=cotacao_ativo, y1=payoff.max()+1)
+    return fig
 
 # ----
 if __name__ == '__main__':
