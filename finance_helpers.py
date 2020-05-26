@@ -17,38 +17,26 @@ def black_scholes(spot, strike, selic, sigma, days, option_type='call'):
     call_price = Nd1 * spot - Nd2 * PVK
     put_price = PVK - spot + call_price
     dNd1 = norm.pdf(d1)
-    ret = {'type': option_type}
+    ret = pd.DataFrame()
 
+    iscall = option_type == 'call'
+    ret['price'] = np.where(iscall, call_price, put_price)
     ret['gamma'] = dNd1 / (spot * sigma * np.sqrt(T))
     ret['vega'] = spot * dNd1 * np.sqrt(T)
-
-    if option_type == 'call':
-        ret['delta'] = Nd1
-        ret['theta'] = -(spot * dNd1 * sigma) / (2*np.sqrt(T)) - \
-            r * strike * np.exp(-r*T) * Nd2
-        ret['rho'] = strike * T * np.exp(-r*T) * Nd2
-        ret['price'] = call_price
-    elif option_type == 'put':
-        ret['delta'] = Nd1 - 1
-        ret['theta'] = -(spot * dNd1 * sigma) / (2*np.sqrt(T)) - \
+    ret['delta'] = np.where(iscall, Nd1, Nd1 - 1)
+    ret['theta'] = np.where(
+        iscall,
+        -(spot * dNd1 * sigma) / (2*np.sqrt(T)) - \
+            r * strike * np.exp(-r*T) * Nd2,
+        -(spot * dNd1 * sigma) / (2*np.sqrt(T)) - \
             r * strike * np.exp(-r*T) * norm.cdf(-d2)
-        ret['rho'] = - strike * T * np.exp(-r*T) * norm.cdf(-d2)
-        ret['price'] = put_price
-
+    )
+    ret['rho'] = np.where(
+        iscall,
+        strike * T * np.exp(-r*T) * Nd2,
+        - strike * T * np.exp(-r*T) * norm.cdf(-d2)
+    )
     return ret
-
-
-def df_black_scholes(spot, strike, selic, sigma, days, option_type):
-    df = pd.DataFrame(index=strike.index,
-        columns=['delta','gamma','vega','theta','rho'])
-    for i in list(df.index):
-        bs = black_scholes(spot, strike[i], selic, sigma[i], days,
-            option_type[i])
-        for j in list(df.columns):
-            df.loc[i, j] = bs[j]
-    df['theta'] = df['theta'] / 252
-    return df
-
 
 
 def implied_vol(option_price, spot, strike, selic, days, option_type='call'):

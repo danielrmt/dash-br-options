@@ -169,8 +169,10 @@ def update_data(empresa, vencim, tipos, cotacao_ativo, dias_vencim):
         x['strike'], float(selic), dias_vencim, x['tipo_opcao']),
         axis=1)
     # Calculate greeks
-    gregas = df_black_scholes(cotacao_ativo, df['strike'], float(selic),
-            df['Vol'], dias_vencim, df['tipo_opcao'])
+    gregas = black_scholes(cotacao_ativo, df['strike'], float(selic),
+            df['Vol'], dias_vencim, df['tipo_opcao'])[
+                ['delta','gamma','vega','theta','rho']
+            ]
     df = pd.concat([df, gregas], axis=1)
 
     df = df[['ticker', 'strike', 'tipo_opcao', 'tipo_exercicio', 'money',
