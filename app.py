@@ -238,7 +238,7 @@ def update_payoff(data, payoff_unit, cotacao_ativo, posicao_ativo, dias_vencim):
         x = posicao_ativo * payoff.index - custo
         payoff['payoff'] = payoff ['payoff'] + x
         payoff['tomorrow'] = payoff ['tomorrow'] + x
-
+    payoff = payoff.rename(columns={'payoff':'vencimento', 'tomorrow':'amanhã'})
     payoff = payoff.reset_index().melt('index')
     if payoff_unit == '%':
         payoff['value'] = 100 * (payoff['value'] / custo)
