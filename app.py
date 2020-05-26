@@ -200,9 +200,10 @@ def update_table(data):
     [Input('options_table', 'data'),
      Input('payoff_unit', 'value'),
      Input('quote_card', 'children'),
-     Input('posicao_ativo', 'value')]
+     Input('posicao_ativo', 'value'),
+     Input('dias_vencim', 'children')]
 )
-def update_payoff(data, payoff_unit, cotacao_ativo, posicao_ativo):
+def update_payoff(data, payoff_unit, cotacao_ativo, posicao_ativo, dias_vencim):
     cotacao_ativo = cotacao_ativo[0]
     df = pd.DataFrame(data)
     cot_range = df['cotacao'].max()*2 + 1
@@ -211,7 +212,9 @@ def update_payoff(data, payoff_unit, cotacao_ativo, posicao_ativo):
     df = df[df['posicao'] != 0]
     custo = np.sum(df['posicao'] * df['cotacao']) + posicao_ativo*cotacao_ativo
     if df.shape[0] == 0:
-        payoff = pd.Series(strikes * posicao_ativo - custo, index=strikes)
+        payoff = pd.DataFrame(
+            strikes * posicao_ativo - custo,
+            index=strikes, columns=['payoff'])
     else:
         payoff = pd.DataFrame(index=strikes, columns=df['ticker']).reset_index()
         payoff = payoff.melt('index')
@@ -225,23 +228,34 @@ def update_payoff(data, payoff_unit, cotacao_ativo, posicao_ativo):
                                     payoff['payoff'])
         payoff['payoff'] = np.where(payoff['payoff'] < 0, 0, payoff['payoff'])
         payoff['payoff'] = payoff['payoff'] * payoff['posicao'].fillna(0)
-        payoff = payoff.groupby('index')['payoff'].sum()
-        payoff = payoff + posicao_ativo * payoff.index - custo
 
+        payoff['tomorrow']  = black_scholes(payoff['index'], payoff['strike'],
+            float(selic), payoff['Vol'], dias_vencim - 1,
+            payoff['tipo_opcao'])['price']
+        payoff['tomorrow'] = payoff['tomorrow'] * payoff['posicao'].fillna(0)
+
+        payoff = payoff.groupby('index')[['payoff', 'tomorrow']].sum()
+        x = posicao_ativo * payoff.index - custo
+        payoff['payoff'] = payoff ['payoff'] + x
+        payoff['tomorrow'] = payoff ['tomorrow'] + x
+
+    payoff = payoff.reset_index().melt('index')
     if payoff_unit == '%':
-        payoff = 100 * (payoff / custo)
-        payoff.index = 100 * (payoff.index / cotacao_ativo - 1)
-        labs = {'x':'Variação do ativo (%)',
-                'y': 'Payoff (%)'}
+        payoff['value'] = 100 * (payoff['value'] / custo)
+        payoff['index'] = 100 * (payoff['index'] / cotacao_ativo - 1)
+        labs = {'index':'Variação do ativo (%)',
+                'value': 'Payoff (%)',
+                'variable':''}
     else:
-        labs = {'x':'Cotação do ativo (R$)',
-                'y': 'Payoff (R$)'}
-    fig = px.line(x=payoff.index, y=payoff.values,
+        labs = {'index':'Cotação do ativo (R$)',
+                'value': 'Payoff (R$)',
+                'variable':''}
+    fig = px.line(payoff, x='index', y='value', color='variable',
         title='Payoff no vencimento', labels=labs)
     if payoff_unit == 'R$':
         fig.add_shape(type='line', line=dict(color='#999999', dash='dot'),
-            x0=cotacao_ativo, y0=payoff.min()-1,
-            x1=cotacao_ativo, y1=payoff.max()+1)
+            x0=cotacao_ativo, y0=payoff['value'].min()-1,
+            x1=cotacao_ativo, y1=payoff['value'].max()+1)
     return fig
 
 # ----
