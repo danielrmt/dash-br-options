@@ -70,7 +70,10 @@ sidebar = gen_grid([
       dcc.Dropdown(id='empresa', value='BOVA11', clearable=False,
                    options=empresas_opt, persistence=True)],
      ['Vencimento', dcc.Dropdown(id='vencim', clearable=False,
-                                 value=vencims.min(), options=vencims_opt)]],
+                                 value=vencims.min(), options=vencims_opt)],
+     ['Posição no ativo',
+      dcc.Input(id='posicao_ativo', type='number', value=1,
+                className='form-control')]],
     [dcc.Checklist(id='tipos', value=tipos,
         className='form-group', 
         labelClassName='form-check-label form-check form-check-inline',
@@ -181,16 +184,17 @@ def update_table(data):
     Output('payoff_plot', 'figure'),
     [Input('options_table', 'data'),
      Input('payoff_unit', 'value'),
-     Input('quote_card', 'children')]
+     Input('quote_card', 'children'),
+     Input('posicao_ativo', 'value')]
 )
-def update_payoff(data, payoff_unit, cotacao_ativo):
+def update_payoff(data, payoff_unit, cotacao_ativo, posicao_ativo):
     cotacao_ativo = cotacao_ativo[0]
     df = pd.DataFrame(data)
     cot_range = df['cotacao'].max()*2 + 1
     strikes = np.arange(df['strike'].min()-cot_range, 
                         df['strike'].max()+cot_range, 0.01)
     df = df[df['posicao'] != 0]
-    custo = np.sum(df['posicao'] * df['cotacao'])
+    custo = np.sum(df['posicao'] * df['cotacao']) + posicao_ativo*cotacao_ativo
     if df.shape[0] == 0:
         return {}
     
@@ -206,7 +210,8 @@ def update_payoff(data, payoff_unit, cotacao_ativo):
                                 payoff['payoff'])
     payoff['payoff'] = np.where(payoff['payoff'] < 0, 0, payoff['payoff'])
     payoff['payoff'] = payoff['payoff'] * payoff['posicao'].fillna(0)
-    payoff = payoff.groupby('index')['payoff'].sum() - custo
+    payoff = payoff.groupby('index')['payoff'].sum()
+    payoff = payoff + posicao_ativo * payoff.index - custo
 
     if payoff_unit == '%':
         payoff = 100 * (payoff / custo)
