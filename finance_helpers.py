@@ -5,11 +5,11 @@ from scipy.stats import norm
 from scipy import optimize
 
 
-def black_scholes(spot, strike, selic, sigma, days, option_type='call'):
+def black_scholes(spot, strike, selic, sigma, days, option_type='call', debug=False):
     r = np.log(1+selic/100)
     T = days / 252
-    d1 = 1 / (sigma * np.sqrt(T)) * \
-        (np.log(spot / strike) + (selic + sigma**2/2) * T)
+    d1 = (np.log(spot / strike) + (r + sigma**2/2) * T) \
+        / (sigma * np.sqrt(T)) 
     d2 = d1 - sigma * np.sqrt(T)
     PVK = strike * np.exp(-r * T)
     Nd1 = norm.cdf(d1)
@@ -20,16 +20,21 @@ def black_scholes(spot, strike, selic, sigma, days, option_type='call'):
     ret = pd.DataFrame()
 
     iscall = option_type == 'call'
+    if debug:
+        ret['d1'] = d1
+        ret['d2'] = d2
+        ret['Nd1'] = Nd1
+        ret['Nd2'] = Nd2
+        ret['PVK'] = PVK
+        ret['sigT'] = sigma * np.sqrt(T)
     ret['price'] = np.where(iscall, call_price, put_price)
     ret['gamma'] = dNd1 / (spot * sigma * np.sqrt(T))
     ret['vega'] = spot * dNd1 * np.sqrt(T)
     ret['delta'] = np.where(iscall, Nd1, Nd1 - 1)
     ret['theta'] = np.where(
         iscall,
-        -(spot * dNd1 * sigma) / (2*np.sqrt(T)) - \
-            r * strike * np.exp(-r*T) * Nd2,
-        -(spot * dNd1 * sigma) / (2*np.sqrt(T)) - \
-            r * strike * np.exp(-r*T) * norm.cdf(-d2)
+        -(spot * dNd1 * sigma) / (2*np.sqrt(T)) - r * PVK * Nd2,
+        -(spot * dNd1 * sigma) / (2*np.sqrt(T)) - r * PVK * norm.cdf(-d2)
     )
     ret['rho'] = np.where(
         iscall,
