@@ -34,6 +34,7 @@ pio.templates.default = 'custom'
 
 #
 selic = last_selic()
+feriados = cache_data('feriados.csv', download_feriados)['Data']
 empresas = cache_data('ativos.csv', download_ativos)
 opcoes = cache_data('opcoes.csv', download_opcoes)
 opcoes = opcoes[pd.to_datetime(opcoes['vencimento']) > pd.to_datetime(date.today())]
@@ -122,7 +123,8 @@ app.layout = html.Div([
     Output('dias_vencim', 'children'),
     [Input('vencim', 'value')])
 def update_wdays(vencim):
-    return np.busday_count(np.datetime64('today', 'D'), vencim) - 1
+    return np.busday_count(np.datetime64('today', 'D'), vencim,
+                           holidays=feriados) - 1
 
 
 @app.callback(

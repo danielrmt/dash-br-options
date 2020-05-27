@@ -78,6 +78,12 @@ def last_selic():
     return json.loads(requests.get(url).text)['conteudo'][0]['valor']
 
 
+def download_feriados():
+    return pd.read_excel(
+        'https://www.anbima.com.br/feriados/arqs/feriados_nacionais.xls',
+        skipfooter=9)[['Data']]
+
+
 def get_quotes(tickers):
     url = 'http://bvmf.bmfbovespa.com.br/cotacoes2000/' + \
         'FormConsultaCotacoes.asp?strListaCodigos=' + '|'.join(tickers)
