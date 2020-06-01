@@ -83,17 +83,22 @@ sidebar = gen_grid([
         options=[{'label':s,'value':s} for s in tipos])],
     [table]
 ])
+# CARDS
+cards = html.Div([
+    gen_card('', id='quote_card', title='Cotação do ativo'),
+    gen_card(selic, id='selic_card', title='SELIC'),
+    gen_card('', id='dias_vencim', title='Dias para vencimento')
+], className='row')
 
+# ALERT
+alert = html.Div(
+    'Este aplicativo foi criado com propósito exclusivamente ' + 
+    'educacional. Não nos responsabilizamos por decisões de ' +
+    'investimento tomadas pelo usuário.',
+    className='alert alert-danger', role='alert')
 
 # MAIN GRID
 grid = gen_grid([
-    [gen_card('', id='quote_card', title='Cotação do ativo'),
-     gen_card(selic, id='selic_card', title='SELIC'),
-     gen_card('', id='dias_vencim', title='Dias para vencimento')],
-    [html.Div('Este aplicativo foi criado com propósito exclusivamente ' + 
-              'educacional. Não nos responsabilizamos por decisões de ' +
-              'investimento tomadas pelo usuário.',
-        className='alert alert-danger', role='alert')],
     [dcc.RadioItems(
         options=[{'label': x,'value': x} for x in ['R$', '%']],
         id='payoff_unit', value='R$', persistence=True,
@@ -114,7 +119,12 @@ hidden = html.Div(
     style={'display': 'none'})
 app.layout = html.Div([
     navbar,
-    gen_sidebar_layout(sidebar, grid, 8, mainClass='container-fluid'),
+    html.Div([
+        alert,
+        cards,
+        sidebar,
+        grid,
+    ], className='container'),
     hidden])
 
 
