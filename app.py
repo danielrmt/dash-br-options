@@ -34,7 +34,7 @@ pio.templates.default = 'custom'
 
 #
 selic = last_selic()
-feriados = cache_data('feriados.csv', download_feriados)['Data']
+feriados = list(cache_data('feriados.csv', download_feriados)['Data'])
 empresas = cache_data('ativos.csv', download_ativos)
 opcoes = cache_data('opcoes.csv', download_opcoes)
 opcoes = opcoes[pd.to_datetime(opcoes['vencimento']) > pd.to_datetime(date.today())]
