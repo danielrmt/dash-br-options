@@ -134,7 +134,7 @@ app.layout = html.Div([
     [Input('vencim', 'value')])
 def update_wdays(vencim):
     return np.busday_count(np.datetime64('today', 'D'), vencim,
-                           holidays=feriados) - 1
+                           holidays=feriados)
 
 
 @app.callback(
