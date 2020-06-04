@@ -16,6 +16,7 @@ import xml.etree.ElementTree as ET
 def download_ativos(indice='IBRA'):
     url = 'http://bvmf.bmfbovespa.com.br/indices/ResumoCarteiraTeorica.aspx?' + \
         f'Indice={indice}'
+    print(url)
     acoes = pd.read_html(url)[0]
     acoes.columns = ['ticker_acao', 'empresa', 'tipo', 'qtde', 'part']
     acoes['part'] = acoes['part'] / 1000
