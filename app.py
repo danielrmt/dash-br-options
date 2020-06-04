@@ -74,7 +74,7 @@ sidebar = gen_grid([
      ['Vencimento', dcc.Dropdown(id='vencim', clearable=False,
                                  value=vencims.min(), options=vencims_opt)],
      ['Posição no ativo',
-      dcc.Input(id='posicao_ativo', type='number', value=1,
+      dcc.Input(id='posicao_ativo', type='number', value=0,
                 className='form-control')]],
     [dcc.Checklist(id='tipos', value=tipos,
         className='form-group', 
