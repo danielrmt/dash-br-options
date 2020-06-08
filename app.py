@@ -106,7 +106,8 @@ grid = gen_grid([
         inputClassName='form-check-input form-check-inline',
         labelClassName='form-check-label form-check-inline'
     )],
-    [dcc.Graph(id='payoff_plot')]
+    [dcc.Graph(id='payoff_plot'),
+     dcc.Graph(id='simulation_plot')]
 ])
 
 
@@ -268,6 +269,53 @@ def update_payoff(data, payoff_unit, cotacao_ativo, posicao_ativo, dias_vencim):
         fig.add_shape(type='line', line=dict(color='#999999', dash='dot'),
             x0=cotacao_ativo, y0=payoff['value'].min()-1,
             x1=cotacao_ativo, y1=payoff['value'].max()+1)
+    return fig
+
+
+@app.callback(
+    Output('simulation_plot', 'figure'),
+    [Input('options_table', 'data'),
+     Input('payoff_unit', 'value'),
+     Input('quote_card', 'children'),
+     Input('posicao_ativo', 'value'),
+     Input('dias_vencim', 'children')]
+)
+def update_payoff(data, payoff_unit, cotacao_ativo, posicao_ativo, dias_vencim):
+    cotacao_ativo = cotacao_ativo[0]
+    df = pd.DataFrame(data)
+    nsims = 100
+    vol = df['Vol'].max()
+    
+    custo = np.sum(df['posicao'] * df['cotacao']) + posicao_ativo*cotacao_ativo
+
+    if (df['posicao'].min() == 0) and (df['posicao'].max() == 0) and \
+        (posicao_ativo == 0):
+        return {}
+
+    sim = pd.DataFrame(
+        np.random.normal(0, np.sqrt(vol**2 / 252), (dias_vencim, nsims)),
+        index=range(dias_vencim, 0, -1), columns=range(nsims)
+    ).cumsum().reset_index().melt('index', var_name='sim', value_name='logreturn')
+    sim['cotacao'] = cotacao_ativo * np.exp(sim['logreturn'])
+
+    sim['payoff'] = sim['cotacao'] * posicao_ativo - custo
+    for ticker in df['ticker'][df['posicao'] != 0]:
+        row = df[df['ticker'] == ticker]
+        v_op = black_scholes(sim['cotacao'], row['strike'].values[0],
+            float(selic), row['Vol'].values[0],
+            sim['index'], row['tipo_opcao'].values[0])
+        sim['payoff'] = sim['payoff'] + v_op['price'] * row['posicao'].values[0]
+
+    if payoff_unit == '%':
+        sim['payoff'] = 100 * sim['payoff'] / custo
+
+    sim['data'] = sim['index'].max() - sim['index']
+
+    fig = px.line(sim, x='data', y='payoff', line_group='sim',
+        title='Simulação',
+        labels={'data': 'Dias', 'payoff': f'Payoff ({payoff_unit})'})
+    fig.update_traces(line={'color': 'rgba(153,153,153,0.5)'})
+
     return fig
 
 # ----
