@@ -314,7 +314,7 @@ def update_payoff(data, payoff_unit, cotacao_ativo, posicao_ativo,
         holidays=feriados)
 
     fig = px.line(sim, x='data', y='payoff', line_group='sim',
-        title='Simulação',
+        title='Simulações',
         labels={'data': '', 'payoff': f'Payoff ({payoff_unit})'})
     fig.update_traces(line={'color': 'rgba(153,153,153,0.5)'})
 
