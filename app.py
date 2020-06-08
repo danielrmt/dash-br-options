@@ -277,9 +277,11 @@ def update_payoff(data, payoff_unit, cotacao_ativo, posicao_ativo, dias_vencim):
      Input('payoff_unit', 'value'),
      Input('quote_card', 'children'),
      Input('posicao_ativo', 'value'),
-     Input('dias_vencim', 'children')]
+     Input('dias_vencim', 'children'),
+     Input('vencim', 'value')]
 )
-def update_payoff(data, payoff_unit, cotacao_ativo, posicao_ativo, dias_vencim):
+def update_payoff(data, payoff_unit, cotacao_ativo, posicao_ativo,
+                  dias_vencim, vencim):
     cotacao_ativo = cotacao_ativo[0]
     df = pd.DataFrame(data)
     nsims = 100
@@ -308,11 +310,12 @@ def update_payoff(data, payoff_unit, cotacao_ativo, posicao_ativo, dias_vencim):
     if payoff_unit == '%':
         sim['payoff'] = 100 * sim['payoff'] / custo
 
-    sim['data'] = sim['index'].max() - sim['index']
+    sim['data'] = np.busday_offset(vencim, - sim['index'], 'backward',
+        holidays=feriados)
 
     fig = px.line(sim, x='data', y='payoff', line_group='sim',
         title='Simulação',
-        labels={'data': 'Dias', 'payoff': f'Payoff ({payoff_unit})'})
+        labels={'data': '', 'payoff': f'Payoff ({payoff_unit})'})
     fig.update_traces(line={'color': 'rgba(153,153,153,0.5)'})
 
     return fig
