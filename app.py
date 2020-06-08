@@ -256,15 +256,14 @@ def update_payoff(data, payoff_unit, cotacao_ativo, posicao_ativo, dias_vencim):
     if payoff_unit == '%':
         payoff['value'] = 100 * (payoff['value'] / custo)
         payoff['index'] = 100 * (payoff['index'] / cotacao_ativo - 1)
-        labs = {'index':'Variação do ativo (%)',
-                'value': 'Payoff (%)',
-                'variable':''}
+        xlab = 'Variação'
     else:
-        labs = {'index':'Cotação do ativo (R$)',
-                'value': 'Payoff (R$)',
-                'variable':''}
+        xlab = 'Cotação'
     fig = px.line(payoff, x='index', y='value', color='variable',
-        title='Payoff no vencimento', labels=labs)
+        title='Payoff no vencimento',
+        labels={'index':f'{xlab} do ativo ({payoff_unit})',
+                'value': f'Payoff ({payoff_unit})',
+                'variable':''})
     if payoff_unit == 'R$':
         fig.add_shape(type='line', line=dict(color='#999999', dash='dot'),
             x0=cotacao_ativo, y0=payoff['value'].min()-1,
