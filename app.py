@@ -90,12 +90,6 @@ cards = html.Div([
     gen_card('', id='dias_vencim', title='Dias para vencimento')
 ], className='row')
 
-# ALERT
-alert = html.Div(
-    'Este aplicativo foi criado com propósito exclusivamente ' + 
-    'educacional. Não nos responsabilizamos por decisões de ' +
-    'investimento tomadas pelo usuário.',
-    className='alert alert-danger', role='alert')
 
 # MAIN GRID
 grid = gen_grid([
@@ -121,12 +115,21 @@ hidden = html.Div(
 app.layout = html.Div([
     navbar,
     html.Div([
-        alert,
         cards,
         sidebar,
         grid,
     ], className='container'),
-    hidden])
+    html.Footer([
+        html.Div([
+            'Este aplicativo tem objetivo exclusivamente educacional e ' + \
+            'todos os dados possuem caráter informativo. Não nos ' + \
+            'responsabilizamos pelas decisões e caminhos tomados tomados ' + \
+            'pelo usuário a partir da análise das informações aqui ' + \
+            'disponibilizadas.'
+        ], className='container')
+    ], className='footer text-muted'),
+    hidden
+])
 
 
 # CALLBACKS
