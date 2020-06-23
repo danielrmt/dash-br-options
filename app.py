@@ -96,7 +96,7 @@ grid = gen_grid([
 
 
 # LAYOUT
-app.title = "Brazilian Options"
+app.title = "Payoff de Opções"
 navbar = gen_navbar(app.title,
     {})
 hidden = html.Div(
