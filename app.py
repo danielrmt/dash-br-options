@@ -74,7 +74,7 @@ sidebar = gen_grid([
                 className='form-control')]],
     [dbc.Checklist(id='tipos', value=tipos, inline=True,
         options=[{'label':s,'value':s} for s in tipos])],
-    [table]
+    [dbc.Spinner(table)]
 ])
 # CARDS
 cards = html.Div([
