@@ -49,13 +49,8 @@ vencims = opcoes['vencimento'].sort_values().unique()
 # APP INITIALIZATION
 app = dash.Dash(
     __name__,
-    external_stylesheets=["https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"],
-    external_scripts=[
-        'https://code.jquery.com/jquery-3.4.1.slim.min.js',
-        'https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js',
-        'https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js'
-    ]
-    )
+    external_stylesheets=[dbc.themes.BOOTSTRAP]
+)
 server = app.server
 
 
@@ -101,8 +96,8 @@ grid = gen_grid([
         inputClassName='form-check-input form-check-inline',
         labelClassName='form-check-label form-check-inline'
     )],
-    [dcc.Graph(id='payoff_plot'),
-     dcc.Graph(id='simulation_plot')]
+    [spinner_graph(id='payoff_plot'),
+     spinner_graph(id='simulation_plot')]
 ])
 
 

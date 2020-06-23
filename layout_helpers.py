@@ -57,3 +57,7 @@ def gen_card(text, id=None, title='', cardClass='border-light',
         ]),
         className=cardClass
     )
+
+
+def spinner_graph(*args, **kwargs):
+    return dbc.Spinner(dcc.Graph(*args, **kwargs))
