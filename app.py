@@ -72,10 +72,7 @@ sidebar = gen_grid([
      ['Posição no ativo',
       dcc.Input(id='posicao_ativo', type='number', value=0,
                 className='form-control')]],
-    [dcc.Checklist(id='tipos', value=tipos,
-        className='form-group', 
-        labelClassName='form-check-label form-check form-check-inline',
-        inputClassName='form-check-input',
+    [dbc.Checklist(id='tipos', value=tipos, inline=True,
         options=[{'label':s,'value':s} for s in tipos])],
     [table]
 ])
@@ -89,12 +86,9 @@ cards = html.Div([
 
 # MAIN GRID
 grid = gen_grid([
-    [dcc.RadioItems(
+    [dbc.RadioItems(
         options=[{'label': x,'value': x} for x in ['R$', '%']],
-        id='payoff_unit', value='R$', persistence=True,
-        className='form-check form-check-inline',
-        inputClassName='form-check-input form-check-inline',
-        labelClassName='form-check-label form-check-inline'
+        id='payoff_unit', value='R$', persistence=True, inline=True
     )],
     [spinner_graph(id='payoff_plot'),
      spinner_graph(id='simulation_plot')]
