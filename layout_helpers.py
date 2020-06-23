@@ -1,40 +1,39 @@
 
 import dash_core_components as dcc
 import dash_html_components as html
+import dash_bootstrap_components as dbc
 
 
 
 def gen_navbar(brand, items,
     barClass='navbar-dark bg-dark p-1',
-    brandClass='col-sm-3 col-md-2 mr-0',
+    #brandClass='col-sm-3 col-md-2 mr-0',
     listClass='px-3',
     itemLiClass='text-nowrap',
-    itemAClass=''):
-    item_list = []
-    for key in items:
-        item_list.append(
-            html.Li(
-                html.A(key, href=items[key],
-                    className=f"nav-link {itemAClass}"),
-                className=f"nav-item {itemLiClass}"
-            )
-        )
-    return html.Nav(
+    itemAClass='',
+    dark=True,
+    color='dark'):
+    return dbc.NavbarSimple(
         [
-            html.A(brand, className=f"navbar-brand {brandClass}"),
-            html.Ul(item_list, className=f"navbar-nav {listClass}")
-        ], className=f"navbar {barClass}"
+            dbc.NavItem(
+                dbc.NavLink(key, href=items[key], className=itemAClass),
+                className=itemLiClass
+            )
+            for key in items
+        ],
+        brand=brand,
+        dark=dark,
+        color=color,
+        className=barClass
     )
-
 
 
 def gen_sidebar_layout(sidebar, content, sidebar_size=2,
-    sidebarClass='bg-light p-5', contentClass='', mainClass=''):
-    return html.Div(
-        [html.Div(sidebar, className=f"sidebar col-md-{sidebar_size} {sidebarClass}"),
-         html.Div(content, className=f"col-md-{12-sidebar_size} {contentClass}")],
-        className=f"row {mainClass}"
-    )
+    sidebarClass='bg-light', contentClass='', mainClass=''):
+    return dbc.Row([
+        dbc.Col(sidebar, className=f"sidebar {sidebarClass}", width=sidebar_size),
+        dbc.Col(content, size=12-sidebar_size, className=contentClass)
+    ], className="mainClass")
 
 
 
@@ -44,18 +43,17 @@ def gen_grid(items, gridClass='', colClass='', rowClass=''):
         cols = []
         size = int(12 / len(row))
         for col in row:
-            cols.append(html.Div(col, className=f"col-md-{size} {colClass}"))
-        rows.append(html.Div(cols, className=f"row {rowClass}"))
-    return html.Div(rows, className=f"{gridClass}")
-
+            cols.append(dbc.Col(col, className=colClass))
+        rows.append(dbc.Row(cols, className=rowClass))
+    return html.Div(rows, className=gridClass)
 
 
 def gen_card(text, id=None, title='', cardClass='border-light', 
              textClass='text-center', titleClass='text-center'):
-    return html.Div([
-        html.Div([
+    return dbc.Card(
+        dbc.CardBody([
             html.H5(title, className=f'card-title {titleClass}'),
             html.P(text, id=id, className=f'card-text {textClass}')
-        ], className='card-body')
-    ], className=f'card {cardClass}')
-
+        ]),
+        className=cardClass
+    )
