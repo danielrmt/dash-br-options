@@ -2,7 +2,6 @@
 
 import os
 import requests
-import urllib.request as ur
 from zipfile import ZipFile
 from io import BytesIO
 import datetime
