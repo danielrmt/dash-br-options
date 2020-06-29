@@ -72,7 +72,7 @@ sidebar = gen_grid([
      ['Posição no ativo',
       dcc.Input(id='posicao_ativo', type='number', value=0,
                 className='form-control')]],
-    [dbc.Checklist(id='tipos', value=tipos, inline=True,
+    [dbc.Checklist(id='tipos', value=tipos, inline=True, switch=True,
         options=[{'label':s,'value':s} for s in tipos])],
     [dbc.Spinner(table)]
 ])
