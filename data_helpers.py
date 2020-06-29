@@ -37,15 +37,15 @@ def download_ativos(indice='IBRA'):
 
 def download_opcoes():
     # Extract file url from B3 website
-    # url = 'http://www.b3.com.br/pt_br/market-data-e-indices/servicos-de-dados/' + \
-    #     'market-data/consultas/mercado-a-vista/opcoes/series-autorizadas/'
-    url = 'http://www.bmfbovespa.com.br/pt_br/servicos/market-data/' + \
-        'consultas/mercado-a-vista/opcoes/series-autorizadas/'
+    url = 'http://www.b3.com.br/pt_br/market-data-e-indices/servicos-de-dados/' + \
+        'market-data/consultas/mercado-a-vista/opcoes/series-autorizadas/'
+    # url = 'http://www.bmfbovespa.com.br/pt_br/servicos/market-data/' + \
+    #     'consultas/mercado-a-vista/opcoes/series-autorizadas/'
     page = requests.get(url)
     soup = BeautifulSoup(page.text, 'html.parser')
     url = soup.find("a", string="Lista Completa de Séries Autorizadas").get('href')
-    # url = 'http://www.b3.com.br' + url
-    url = 'http://www.bmfbovespa.com.br/' + url
+    url = 'http://www.b3.com.br' + url
+    # url = 'http://www.bmfbovespa.com.br/' + url
     print(url)
 
     # Unzip
