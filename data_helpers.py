@@ -3,6 +3,7 @@
 import os
 import requests
 from zipfile import ZipFile
+import urllib.request as ur
 from io import BytesIO
 import datetime
 import json
@@ -50,14 +51,9 @@ def download_opcoes():
     # url = 'http://www.bmfbovespa.com.br/' + url
     print(url)
 
-    h = {
-        'Referer': url0,
-        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36'
-    }
-    r = s.get(url, headers=h)
-
     # Unzip
-    with ZipFile(BytesIO(r.content), 'r') as zip_ref:
+    filehandle, _ = ur.urlretrieve(url)
+    with ZipFile(filehandle, 'r') as zip_ref:
         zip_ref.extractall()
 
     if not os.path.exists('SI_D_SEDE.txt'):
