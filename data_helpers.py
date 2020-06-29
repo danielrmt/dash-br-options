@@ -4,6 +4,7 @@ import os
 import requests
 import urllib.request as ur
 from zipfile import ZipFile
+from io import BytesIO
 import datetime
 import json
 
@@ -36,21 +37,28 @@ def download_ativos(indice='IBRA'):
 
 
 def download_opcoes():
+    s = requests.Session()
+
     # Extract file url from B3 website
-    url = 'http://www.b3.com.br/pt_br/market-data-e-indices/servicos-de-dados/' + \
+    url0 = 'http://www.b3.com.br/pt_br/market-data-e-indices/servicos-de-dados/' + \
         'market-data/consultas/mercado-a-vista/opcoes/series-autorizadas/'
     # url = 'http://www.bmfbovespa.com.br/pt_br/servicos/market-data/' + \
     #     'consultas/mercado-a-vista/opcoes/series-autorizadas/'
-    page = requests.get(url)
+    page = s.get(url0)
     soup = BeautifulSoup(page.text, 'html.parser')
     url = soup.find("a", string="Lista Completa de Séries Autorizadas").get('href')
     url = 'http://www.b3.com.br' + url
     # url = 'http://www.bmfbovespa.com.br/' + url
     print(url)
 
+    h = {
+        'Referer': url0,
+        'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.116 Safari/537.36'
+    }
+    r = s.get(url, headers=h)
+
     # Unzip
-    filehandle, _ = ur.urlretrieve(url)
-    with ZipFile(filehandle, 'r') as zip_ref:
+    with ZipFile(BytesIO(r.content), 'r') as zip_ref:
         zip_ref.extractall()
 
     if not os.path.exists('SI_D_SEDE.txt'):
