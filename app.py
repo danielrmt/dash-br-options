@@ -21,13 +21,23 @@ from data_helpers import *
 from finance_helpers import *
 
 
-#
+# Plotly settings
+colorscheme = ["#E69F00", "#56B4E9", "#009E73", "#F0E442", 
+               "#0072B2", "#D55E00", "#CC79A7", "#999999"]
 pio.templates["custom"] = go.layout.Template(
     layout=go.Layout(
-        margin=dict(l=50, r=20, t=40, b=40),
-        legend=dict(orientation='h'),
-        colorway=["#E69F00", "#56B4E9", "#009E73", "#F0E442", 
-                  "#0072B2", "#D55E00", "#CC79A7", "#999999"]
+        # Small margins
+        margin=dict(l=50, r=20, t=60, b=40),
+        # Horizontal legend on top-left
+        legend=dict(orientation='h', x=0, y=1.05),
+        # Title position on top-left
+        title={'y': 0.97, 'x': 0, 'xanchor': 'left', 'yanchor': 'top'},
+        # Bigger title
+        titlefont={'size': 20},
+        # Custom color scheme 
+        colorway=colorscheme,
+        #
+        hovermode='x'
     )
 )
 pio.templates.default = 'custom'
@@ -267,6 +277,8 @@ def update_payoff(data, payoff_unit, cotacao_ativo, posicao_ativo, dias_vencim):
         fig.add_shape(type='line', line=dict(color='#999999', dash='dot'),
             x0=cotacao_ativo, y0=payoff['value'].min()-1,
             x1=cotacao_ativo, y1=payoff['value'].max()+1)
+    fig.update_traces(hovertemplate=None)
+    fig.update_layout(hovermode='x')
     return fig
 
 
@@ -320,7 +332,9 @@ def update_montecarlo(data, payoff_unit, cotacao_ativo, posicao_ativo,
     fig = px.line(sim, x='data', y='payoff', line_group='sim',
         title='Simulações',
         labels={'data': '', 'payoff': f'Payoff ({payoff_unit})'})
-    fig.update_traces(line={'color': 'rgba(153,153,153,0.5)'})
+    fig.update_traces(line={'color': 'rgba(153,153,153,0.5)'},
+        hovertemplate=None)
+    fig.update_layout(hovermode='closest')
 
     return fig
 
