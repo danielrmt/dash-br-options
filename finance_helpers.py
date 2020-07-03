@@ -45,6 +45,8 @@ def black_scholes(spot, strike, selic, sigma, days, option_type='call', debug=Fa
 
 
 def implied_vol(option_price, spot, strike, selic, days, option_type='call'):
+    if np.isnan(option_price):
+        return np.NaN
     x = optimize.fsolve(
         lambda x: (
             black_scholes(spot, strike, selic, x, days, option_type)['price'] -

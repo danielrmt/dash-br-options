@@ -166,7 +166,7 @@ def update_data(empresa, vencim, tipos, cotacao_ativo, dias_vencim):
     df = df.head(20).rename(columns={'ticker_opcao':'ticker'})
 
     quotes = get_quotes(df['ticker'].values)
-    df = pd.merge(df, quotes, on='ticker')
+    df = pd.merge(df, quotes, on='ticker', how='left')
     df['VE'] = df['cotacao'] - df['VI']
 
     # Calculate implied volatility
@@ -215,6 +215,11 @@ def update_payoff(data, payoff_unit, cotacao_ativo, posicao_ativo, dias_vencim):
     cot_range = df['cotacao'].max()*2 + 1
     strikes = np.arange(df['strike'].min()-cot_range, 
                         df['strike'].max()+cot_range, 0.01)
+    medianvol = df['Vol'].median()
+    cotacao_bs = black_scholes(cotacao_ativo, df['strike'], float(selic),
+        medianvol, dias_vencim, df['tipo_opcao'])['price']
+    df['cotacao'] = np.where(df['cotacao'].isnull(), cotacao_bs, df['cotacao'])
+
     df = df[df['posicao'] != 0]
     custo = np.sum(df['posicao'] * df['cotacao']) + posicao_ativo*cotacao_ativo
     if df.shape[0] == 0:
@@ -224,7 +229,8 @@ def update_payoff(data, payoff_unit, cotacao_ativo, posicao_ativo, dias_vencim):
     else:
         payoff = pd.DataFrame(index=strikes, columns=df['ticker']).reset_index()
         payoff = payoff.melt('index')
-        payoff = pd.merge(payoff, df)
+        payoff = pd.merge(payoff, df, how='left')
+        payoff['Vol'] = payoff['Vol'].fillna(medianvol)
         payoff['payoff'] = 0
         payoff['payoff'] = np.where(payoff['tipo_opcao'] == 'call',
                                     payoff['index'] - payoff['strike'],
@@ -273,12 +279,17 @@ def update_payoff(data, payoff_unit, cotacao_ativo, posicao_ativo, dias_vencim):
      Input('dias_vencim', 'children'),
      Input('vencim', 'value')]
 )
-def update_payoff(data, payoff_unit, cotacao_ativo, posicao_ativo,
+def update_montecarlo(data, payoff_unit, cotacao_ativo, posicao_ativo,
                   dias_vencim, vencim):
     cotacao_ativo = cotacao_ativo[0]
     df = pd.DataFrame(data)
     nsims = 100
     vol = df['Vol'].max()
+    df['Vol'] = df['Vol'].fillna(df['Vol'].median())
+
+    cotacao_bs = black_scholes(cotacao_ativo, df['strike'], float(selic),
+        vol, dias_vencim, df['tipo_opcao'])['price']
+    df['cotacao'] = np.where(df['cotacao'].isnull(), cotacao_bs, df['cotacao'])
     
     custo = np.sum(df['posicao'] * df['cotacao']) + posicao_ativo*cotacao_ativo
 
