@@ -220,6 +220,8 @@ def update_table(data):
      Input('dias_vencim', 'children')]
 )
 def update_payoff(data, payoff_unit, cotacao_ativo, posicao_ativo, dias_vencim):
+    if posicao_ativo is None or posicao_ativo == '':
+        posicao_ativo = 0
     cotacao_ativo = cotacao_ativo[0]
     df = pd.DataFrame(data)
     cot_range = df['cotacao'].max()*2 + 1
@@ -293,6 +295,8 @@ def update_payoff(data, payoff_unit, cotacao_ativo, posicao_ativo, dias_vencim):
 )
 def update_montecarlo(data, payoff_unit, cotacao_ativo, posicao_ativo,
                   dias_vencim, vencim):
+    if posicao_ativo is None or posicao_ativo == '':
+        posicao_ativo = 0
     cotacao_ativo = cotacao_ativo[0]
     df = pd.DataFrame(data)
     nsims = 100
