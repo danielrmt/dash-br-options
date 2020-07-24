@@ -232,7 +232,7 @@ def update_payoff(data, payoff_unit, cotacao_ativo, posicao_ativo, dias_vencim):
         medianvol, dias_vencim, df['tipo_opcao'])['price']
     df['cotacao'] = np.where(df['cotacao'].isnull(), cotacao_bs, df['cotacao'])
 
-    df = df[df['posicao'] != 0]
+    df = df[(df['posicao'] != 0) & (df['posicao'] != "")]
     custo = np.sum(df['posicao'] * df['cotacao']) + posicao_ativo*cotacao_ativo
     if df.shape[0] == 0:
         payoff = pd.DataFrame(
@@ -306,7 +306,8 @@ def update_montecarlo(data, payoff_unit, cotacao_ativo, posicao_ativo,
     cotacao_bs = black_scholes(cotacao_ativo, df['strike'], float(selic),
         vol, dias_vencim, df['tipo_opcao'])['price']
     df['cotacao'] = np.where(df['cotacao'].isnull(), cotacao_bs, df['cotacao'])
-    
+    if '' in df['posicao'].values:
+        df['posicao'] = df['posicao'].replace('', 0).astype(float)
     custo = np.sum(df['posicao'] * df['cotacao']) + posicao_ativo*cotacao_ativo
 
     if (df['posicao'].min() == 0) and (df['posicao'].max() == 0) and \
